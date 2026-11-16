@@ -8,12 +8,17 @@ import { UserRole } from 'src/common/user-role.enum';
 import { SkipSubscriptionCheck } from '../auth/decorators/skip-subscription-check.decorator';
 
 @Controller('subscriptions')
-@UseGuards(JwtAuthGuard, RolesGuard)
 @SkipSubscriptionCheck()
 export class SubscriptionsController {
   constructor(private readonly subscriptionsService: SubscriptionsService) {}
 
+  @Get('plans')
+  getPublicPlans() {
+    return this.subscriptionsService.getAllPlans(true);
+  }
+
   @Post('create-checkout-session')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.OK)
   createCheckoutSession(@Body() createCheckoutSessionDto: CreateCheckoutSessionDto) {
@@ -21,6 +26,7 @@ export class SubscriptionsController {
   }
 
   @Get('billing-portal')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.OK)
   createBillingPortalSession() {

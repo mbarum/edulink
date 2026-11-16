@@ -12,3 +12,14 @@ export enum SubscriptionStatus {
   PAST_DUE = 'past_due',
   CANCELED = 'canceled',
 }
+
+export enum BillingModel {
+  FLAT_FEE = 'flat_fee',
+  PER_STUDENT = 'per_student',
+}
+
+export enum BillingInterval {
+  MONTH = 'month',
+  TERM = 'term',
+  YEAR = 'year',
+}

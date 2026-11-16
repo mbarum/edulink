@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource, DeepPartial } from 'typeorm';
 import { Student } from './entities/student.entity';
 import { TenancyService } from 'src/core/tenancy/tenancy.service';
 import { TenantAwareCrudService } from 'src/core/common/tenant-aware-crud.service';
@@ -20,9 +20,17 @@ export class StudentsService extends TenantAwareCrudService<Student> {
     private readonly sectionRepository: Repository<Section>,
     @InjectRepository(AcademicYear)
     private readonly academicYearRepository: Repository<AcademicYear>,
+    private readonly dataSource: DataSource,
     tenancyService: TenancyService,
   ) {
     super(studentRepository, tenancyService);
+  }
+
+  async create(createDto: DeepPartial<Student>): Promise<Student> {
+    if (createDto.parentalConsentVerified) {
+      createDto.consentTimestamp = new Date();
+    }
+    return super.create(createDto);
   }
 
   async bulkUpload(file: Express.Multer.File): Promise<{ success: number; failed: number; errors: any[] }> {
@@ -40,7 +48,7 @@ export class StudentsService extends TenantAwareCrudService<Student> {
       bufferStream.end(file.buffer);
       await workbook.csv.read(bufferStream);
     } else {
-      await workbook.xlsx.load(file.buffer);
+      await workbook.xlsx.load(file.buffer as any);
     }
 
     const worksheet = workbook.worksheets[0];
@@ -131,7 +139,9 @@ export class StudentsService extends TenantAwareCrudService<Student> {
     });
 
     if (studentsToSave.length > 0) {
-      await this.studentRepository.save(studentsToSave, { chunk: 100 });
+      await this.dataSource.transaction(async (manager) => {
+        await manager.getRepository(Student).save(studentsToSave, { chunk: 100 });
+      });
     }
 
     return {

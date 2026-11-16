@@ -3,6 +3,8 @@ import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import { Users, BookOpen, Calendar, CheckSquare, LogOut, Bell, MessageSquare, Award, CreditCard, ChevronRight, Activity, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../contexts/LanguageContext';
+import LanguageSelector from '../components/LanguageSelector';
 
 interface ChildInfo {
   id: string;
@@ -32,6 +34,7 @@ interface ParentStats {
 
 const ParentDashboardPage: React.FC = () => {
   const { user, logout } = useAuth();
+  const { t } = useLanguage();
   const [stats, setStats] = useState<ParentStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -69,38 +72,37 @@ const ParentDashboardPage: React.FC = () => {
       <aside className="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col">
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-2xl font-bold text-teal-600">SaaSLink</h2>
-          <p className="text-sm text-gray-500 mt-1">Parent Portal</p>
+          <p className="text-sm text-gray-500 mt-1">{t('nav.parentPortal', 'Parent Portal')}</p>
         </div>
         <nav className="flex-1 p-4 space-y-1">
           <Link to="/parent" className="flex items-center px-4 py-3 text-teal-600 bg-teal-50 rounded-lg font-medium">
             <Activity className="w-5 h-5 mr-3" />
-            Overview
+            {t('nav.dashboard', 'Overview')}
           </Link>
           <a href="#" className="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
             <Users className="w-5 h-5 mr-3" />
-            My Children
+            {t('parent.myChildren', 'My Children')}
           </a>
           <a href="#" className="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
             <Award className="w-5 h-5 mr-3" />
-            Academics
+            {t('nav.academics', 'Academics')}
           </a>
           <a href="#" className="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
             <CheckSquare className="w-5 h-5 mr-3" />
-            Attendance
+            {t('nav.attendance', 'Attendance')}
           </a>
           <a href="#" className="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
             <CreditCard className="w-5 h-5 mr-3" />
-            Fees & Payments
-          </a>
-          <a href="#" className="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
-            <MessageSquare className="w-5 h-5 mr-3" />
-            Messages
+            {t('nav.payments', 'Fees & Payments')}
           </a>
         </nav>
-        <div className="p-4 border-t border-gray-200">
+        <div className="p-4 border-t border-gray-200 space-y-3">
+          <div className="px-1">
+            <LanguageSelector variant="light" className="w-full" />
+          </div>
           <button onClick={logout} className="flex items-center w-full px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg font-medium transition-colors">
             <LogOut className="w-5 h-5 mr-3" />
-            Logout
+            {t('nav.logout', 'Logout')}
           </button>
         </div>
       </aside>
@@ -110,16 +112,19 @@ const ParentDashboardPage: React.FC = () => {
         <div className="max-w-6xl mx-auto">
           <header className="flex justify-between items-center mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Welcome, {user?.username}</h1>
-              <p className="text-gray-500 mt-1">Here is an overview of your children's progress.</p>
+              <h1 className="text-3xl font-bold text-gray-900">{t('dashboard.welcomeBack', 'Welcome back')}, {user?.username}</h1>
+              <p className="text-gray-500 mt-1">{t('dashboard.subheading', "Here's what's happening at your school today.")}</p>
             </div>
             <div className="flex items-center space-x-4">
+              <div className="hidden sm:block">
+                <LanguageSelector variant="light" />
+              </div>
               <button className="p-2 text-gray-400 hover:text-teal-600 transition-colors relative">
                 <Bell className="w-6 h-6" />
                 <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-gray-50"></span>
               </button>
               <div className="md:hidden">
-                <button onClick={logout} className="text-red-600 font-medium">Logout</button>
+                <button onClick={logout} className="text-red-600 font-medium">{t('nav.logout', 'Logout')}</button>
               </div>
             </div>
           </header>

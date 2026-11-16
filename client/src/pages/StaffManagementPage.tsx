@@ -14,6 +14,7 @@ interface Staff {
 const StaffManagementPage: React.FC = () => {
   const [staffList, setStaffList] = useState<Staff[]>([]);
   const [isAdding, setIsAdding] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -32,6 +33,7 @@ const StaffManagementPage: React.FC = () => {
       setStaffList(response.data);
     } catch (error) {
       console.error('Failed to fetch staff', error);
+      setStatusMessage({ type: 'error', text: 'Failed to load staff list. Please refresh.' });
     }
   };
 
@@ -41,9 +43,11 @@ const StaffManagementPage: React.FC = () => {
       await api.post('/staff', formData);
       setIsAdding(false);
       setFormData({ firstName: '', lastName: '', email: '', role: 'Teacher', employeeId: '' });
+      setStatusMessage({ type: 'success', text: 'Staff member registered successfully!' });
       fetchStaff();
     } catch (error) {
       console.error('Failed to add staff', error);
+      setStatusMessage({ type: 'error', text: 'Failed to register staff member. Please check input.' });
     }
   };
 
@@ -57,11 +61,27 @@ const StaffManagementPage: React.FC = () => {
           </div>
           <button
             onClick={() => setIsAdding(!isAdding)}
-            className="bg-black text-white px-8 py-3 rounded-full font-bold uppercase tracking-widest text-xs hover:bg-gray-800 transition-all"
+            aria-expanded={isAdding}
+            className="bg-black text-white px-8 py-3 rounded-full font-bold uppercase tracking-widest text-xs hover:bg-gray-800 focus:ring-2 focus:ring-offset-2 focus:ring-black focus:outline-none transition-all"
           >
             {isAdding ? 'Cancel' : 'Register New Staff'}
           </button>
         </header>
+
+        {/* Live Region for Screen Readers */}
+        <div aria-live="polite" aria-atomic="true" className="mb-6">
+          {statusMessage && (
+            <div
+              className={`p-4 rounded-xl text-sm font-medium ${
+                statusMessage.type === 'success'
+                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                  : 'bg-red-50 text-red-800 border border-red-200'
+              }`}
+            >
+              {statusMessage.text}
+            </div>
+          )}
+        </div>
 
         {isAdding && (
           <motion.div
@@ -71,60 +91,83 @@ const StaffManagementPage: React.FC = () => {
           >
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">First Name</label>
+                <label htmlFor="staff-firstName" className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                  First Name
+                </label>
                 <input
+                  id="staff-firstName"
+                  name="firstName"
                   type="text"
                   required
-                  className="w-full bg-white border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-black outline-none transition-all"
+                  className="w-full bg-white border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-black focus:ring-2 focus:ring-black focus:outline-none transition-all"
                   value={formData.firstName}
                   onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Last Name</label>
+                <label htmlFor="staff-lastName" className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                  Last Name
+                </label>
                 <input
+                  id="staff-lastName"
+                  name="lastName"
                   type="text"
                   required
-                  className="w-full bg-white border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-black outline-none transition-all"
+                  className="w-full bg-white border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-black focus:ring-2 focus:ring-black focus:outline-none transition-all"
                   value={formData.lastName}
                   onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Email Address</label>
+                <label htmlFor="staff-email" className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                  Email Address
+                </label>
                 <input
+                  id="staff-email"
+                  name="email"
                   type="email"
                   required
-                  className="w-full bg-white border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-black outline-none transition-all"
+                  className="w-full bg-white border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-black focus:ring-2 focus:ring-black focus:outline-none transition-all"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Role</label>
+                <label htmlFor="staff-role" className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                  Role
+                </label>
                 <select
-                  className="w-full bg-white border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-black outline-none transition-all"
+                  id="staff-role"
+                  name="role"
+                  className="w-full bg-white border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-black focus:ring-2 focus:ring-black focus:outline-none transition-all"
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                 >
-                  <option>Teacher</option>
-                  <option>Admin</option>
-                  <option>Accountant</option>
-                  <option>Librarian</option>
+                  <option value="Teacher">Teacher</option>
+                  <option value="Admin">Admin</option>
+                  <option value="Accountant">Accountant</option>
+                  <option value="Librarian">Librarian</option>
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Employee ID</label>
+                <label htmlFor="staff-employeeId" className="block text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                  Employee ID
+                </label>
                 <input
+                  id="staff-employeeId"
+                  name="employeeId"
                   type="text"
                   required
-                  className="w-full bg-white border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-black outline-none transition-all"
+                  className="w-full bg-white border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-black focus:ring-2 focus:ring-black focus:outline-none transition-all"
                   value={formData.employeeId}
                   onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
                 />
               </div>
               <div className="flex items-end">
-                <button type="submit" className="w-full bg-black text-white py-3 rounded-xl font-bold uppercase tracking-widest text-xs">
+                <button
+                  type="submit"
+                  className="w-full bg-black text-white py-3 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-gray-800 focus:ring-2 focus:ring-offset-2 focus:ring-black focus:outline-none transition-all"
+                >
                   Save Personnel Record
                 </button>
               </div>
@@ -134,7 +177,7 @@ const StaffManagementPage: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {staffList.map((staff) => (
-            <div key={staff.id} className="group border-2 border-gray-100 p-6 rounded-3xl hover:border-black transition-all cursor-pointer">
+            <div key={staff.id} className="group border-2 border-gray-100 p-6 rounded-3xl hover:border-black transition-all">
               <div className="flex justify-between items-start mb-4">
                 <div className="w-12 h-12 bg-gray-100 rounded-2xl flex items-center justify-center font-bold text-gray-400 group-hover:bg-black group-hover:text-white transition-all">
                   {staff.firstName[0]}{staff.lastName[0]}
@@ -147,8 +190,11 @@ const StaffManagementPage: React.FC = () => {
               <p className="text-gray-400 text-sm font-mono mb-4">{staff.email}</p>
               <div className="pt-4 border-t border-gray-100 flex justify-between items-center">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-gray-300">ID: {staff.employeeId}</span>
-                <button className="text-xs font-bold uppercase tracking-widest text-black opacity-0 group-hover:opacity-100 transition-all">
-                  View Profile →
+                <button
+                  aria-label={`View profile for ${staff.firstName} ${staff.lastName}`}
+                  className="text-xs font-bold uppercase tracking-widest text-black opacity-0 group-hover:opacity-100 focus:opacity-100 focus:outline-none transition-all"
+                >
+                  View Profile &rarr;
                 </button>
               </div>
             </div>

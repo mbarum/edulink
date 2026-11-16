@@ -16,6 +16,8 @@ import {
   Banknote
 } from 'lucide-react';
 import api from '../services/api';
+import { useLanguage } from '../contexts/LanguageContext';
+import LanguageSelector from '../components/LanguageSelector';
 
 const steps = [
   { id: 1, title: 'School Info', icon: <School className="w-5 h-5" /> },
@@ -34,6 +36,7 @@ const plans = [
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useLanguage();
   
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -106,7 +109,10 @@ const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-brand-green flex items-center justify-center p-6 font-sans selection:bg-brand-sand selection:text-brand-dark">
+    <div className="min-h-screen bg-brand-green flex items-center justify-center p-6 font-sans selection:bg-brand-sand selection:text-brand-dark relative">
+      <div className="absolute top-6 right-6">
+        <LanguageSelector variant="dark" />
+      </div>
       <div className="w-full max-w-2xl">
         {/* Progress Header */}
         <div className="mb-12">

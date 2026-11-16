@@ -6,7 +6,9 @@ import {
   Patch,
   Param,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { TenantAwareCacheInterceptor } from 'src/core/interceptors/tenant-aware-cache.interceptor';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AcademicsService } from './academics.service';
 import { AcademicYearsService } from './academic-years.service';
@@ -37,6 +39,7 @@ export class AcademicsController {
   }
 
   @Get('subjects')
+  @UseInterceptors(TenantAwareCacheInterceptor)
   findAllSubjects() {
     return this.academicsService.findAll();
   }
@@ -48,6 +51,7 @@ export class AcademicsController {
   }
 
   @Get('academic-years')
+  @UseInterceptors(TenantAwareCacheInterceptor)
   findAllAcademicYears() {
     return this.academicYearsService.findAll();
   }
@@ -64,6 +68,7 @@ export class AcademicsController {
   }
 
   @Get('class-levels')
+  @UseInterceptors(TenantAwareCacheInterceptor)
   findAllClassLevels() {
     return this.classLevelsService.findAllWithSections();
   }
@@ -75,6 +80,7 @@ export class AcademicsController {
   }
 
   @Get('sections')
+  @UseInterceptors(TenantAwareCacheInterceptor)
   findAllSections() {
     return this.sectionsService.findAll();
   }
@@ -86,6 +92,7 @@ export class AcademicsController {
   }
 
   @Get('grading-scales')
+  @UseInterceptors(TenantAwareCacheInterceptor)
   findAllGradingScales() {
     return this.gradingService.findAll();
   }

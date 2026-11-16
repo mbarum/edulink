@@ -6,6 +6,8 @@ import {
 import {
   SubscriptionPlan,
   SubscriptionStatus,
+  BillingModel,
+  BillingInterval,
 } from 'src/common/subscription.enums';
 
 @Entity({ name: 'tenants' })
@@ -24,7 +26,27 @@ export class Tenant {
     enum: SubscriptionPlan,
     default: SubscriptionPlan.FREE,
   })
-  plan: SubscriptionPlan;
+  plan: SubscriptionPlan | string;
+
+  @Column({ nullable: true })
+  planId: string;
+
+  @Column({
+    type: 'simple-enum',
+    enum: BillingModel,
+    default: BillingModel.FLAT_FEE,
+  })
+  billingModel: BillingModel;
+
+  @Column({
+    type: 'simple-enum',
+    enum: BillingInterval,
+    default: BillingInterval.MONTH,
+  })
+  billingInterval: BillingInterval;
+
+  @Column('decimal', { precision: 10, scale: 2, nullable: true })
+  customRate: number; // Custom flat rate or custom per-student rate override
 
   @Column({
     type: 'simple-enum',

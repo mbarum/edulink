@@ -19,12 +19,26 @@ export abstract class TenantAwareCrudService<T extends TenantAwareEntity> {
   }
 
   findAll(options?: FindManyOptions<T>): Promise<T[]> {
+    const tenantId = this.tenancyService.getTenantId() as string;
+    let whereClause: any;
+
+    if (Array.isArray(options?.where)) {
+      whereClause = options.where.map((cond) => ({
+        ...cond,
+        tenantId,
+      }));
+    } else if (options?.where) {
+      whereClause = {
+        ...options.where,
+        tenantId,
+      };
+    } else {
+      whereClause = { tenantId };
+    }
+
     return this.repository.find({
       ...options,
-      where: {
-        ...options?.where,
-        tenantId: this.tenancyService.getTenantId() as string,
-      } as any,
+      where: whereClause,
     });
   }
 

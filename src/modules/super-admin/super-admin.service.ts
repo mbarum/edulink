@@ -1,12 +1,20 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import * as fs from 'fs';
+import { join, extname } from 'path';
 import { Tenant } from '../tenants/entities/tenant.entity';
 import { SubscriptionStatus } from 'src/common/subscription.enums';
 import { PendingPayment } from '../payments/entities/pending-payment.entity';
 import { Student } from '../students/entities/student.entity';
 import { Attendance } from '../attendance/entities/attendance.entity';
 import { User } from '../users/entities/user.entity';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
+import { CreatePlanDto } from '../subscriptions/dto/create-plan.dto';
+import { UpdatePlanDto } from '../subscriptions/dto/update-plan.dto';
+import { UpdateTenantSubscriptionDto } from './dto/update-tenant-subscription.dto';
+import { PlatformSetting } from './entities/platform-setting.entity';
+import { UpdatePlatformBrandingDto } from './dto/update-platform-branding.dto';
 
 @Injectable()
 export class SuperAdminService {
@@ -21,6 +29,9 @@ export class SuperAdminService {
     private readonly attendanceRepository: Repository<Attendance>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(PlatformSetting)
+    private readonly platformSettingRepository: Repository<PlatformSetting>,
+    private readonly subscriptionsService: SubscriptionsService,
   ) {}
 
   async getDashboardAnalytics() {
@@ -110,9 +121,17 @@ export class SuperAdminService {
     };
   }
 
-
   async getAllTenants() {
-    return this.tenantRepository.find();
+    const tenants = await this.tenantRepository.find();
+    return Promise.all(
+      tenants.map(async (t) => {
+        const studentCount = await this.studentRepository.count({ where: { tenantId: t.id } });
+        return {
+          ...t,
+          studentCount,
+        };
+      }),
+    );
   }
 
   async getTenantById(id: string) {
@@ -120,7 +139,11 @@ export class SuperAdminService {
     if (!tenant) {
       throw new NotFoundException('Tenant not found');
     }
-    return tenant;
+    const studentCount = await this.studentRepository.count({ where: { tenantId: id } });
+    return {
+      ...tenant,
+      studentCount,
+    };
   }
 
   async getPendingPayments() {
@@ -131,7 +154,8 @@ export class SuperAdminService {
   }
 
   async updateTenantStatus(id: string, status: string) {
-    const tenant = await this.getTenantById(id);
+    const tenant = await this.tenantRepository.findOneBy({ id });
+    if (!tenant) throw new NotFoundException('Tenant not found');
     tenant.subscriptionStatus = status as SubscriptionStatus;
     return this.tenantRepository.save(tenant);
   }
@@ -158,13 +182,112 @@ export class SuperAdminService {
   }
 
   async deleteTenant(id: string) {
-    const result = await this.tenantRepository.delete(id);
-    if (result.affected === 0) throw new NotFoundException('Tenant not found');
+    const tenant = await this.tenantRepository.findOneBy({ id });
+    if (!tenant) {
+      throw new NotFoundException('Tenant not found');
+    }
+    return this.tenantRepository.remove(tenant);
   }
 
   async getAllUsers() {
     return this.userRepository.find({
+      relations: ['tenant'],
       select: ['id', 'username', 'role', 'tenantId'],
     });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Superadmin Package / Plan Management (Full Control)
+  // ---------------------------------------------------------------------------
+
+  async getAllPlans() {
+    return this.subscriptionsService.getAllPlans(false);
+  }
+
+  async getPlanById(id: string) {
+    return this.subscriptionsService.getPlanById(id);
+  }
+
+  async createPlan(dto: CreatePlanDto) {
+    return this.subscriptionsService.createPlan(dto);
+  }
+
+  async updatePlan(id: string, dto: UpdatePlanDto) {
+    return this.subscriptionsService.updatePlan(id, dto);
+  }
+
+  async deletePlan(id: string) {
+    return this.subscriptionsService.deletePlan(id);
+  }
+
+  async updateTenantSubscription(id: string, dto: UpdateTenantSubscriptionDto) {
+    const tenant = await this.tenantRepository.findOneBy({ id });
+    if (!tenant) {
+      throw new NotFoundException('Tenant not found');
+    }
+
+    if (dto.plan !== undefined) tenant.plan = dto.plan;
+    if (dto.planId !== undefined) tenant.planId = dto.planId;
+    if (dto.billingModel !== undefined) tenant.billingModel = dto.billingModel;
+    if (dto.billingInterval !== undefined) tenant.billingInterval = dto.billingInterval;
+    if (dto.customRate !== undefined) tenant.customRate = dto.customRate;
+    if (dto.subscriptionStatus !== undefined) tenant.subscriptionStatus = dto.subscriptionStatus;
+
+    return this.tenantRepository.save(tenant);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Superadmin Branding Management (Logo & Favicon Control)
+  // ---------------------------------------------------------------------------
+
+  async getPlatformBranding(): Promise<PlatformSetting> {
+    let setting = await this.platformSettingRepository.findOneBy({ id: 'global' });
+    if (!setting) {
+      setting = this.platformSettingRepository.create({
+        id: 'global',
+        platformName: 'SaaSLink',
+        tagline: 'Multi-Tenant Education Management Information System',
+        logoUrl: null,
+        faviconUrl: null,
+      });
+      setting = await this.platformSettingRepository.save(setting);
+    }
+    return setting;
+  }
+
+  async updatePlatformBranding(dto: UpdatePlatformBrandingDto): Promise<PlatformSetting> {
+    const setting = await this.getPlatformBranding();
+    if (dto.platformName !== undefined) setting.platformName = dto.platformName;
+    if (dto.tagline !== undefined) setting.tagline = dto.tagline;
+    if (dto.logoUrl !== undefined) setting.logoUrl = dto.logoUrl;
+    if (dto.faviconUrl !== undefined) setting.faviconUrl = dto.faviconUrl;
+    return this.platformSettingRepository.save(setting);
+  }
+
+  async saveBrandingAsset(file: Express.Multer.File, type: 'logo' | 'favicon'): Promise<PlatformSetting> {
+    if (!file) {
+      throw new BadRequestException('No file provided for upload.');
+    }
+
+    // Target directory: public/uploads/branding/
+    const uploadsDir = join(process.cwd(), 'public', 'uploads', 'branding');
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+
+    const fileExt = extname(file.originalname).toLowerCase() || (type === 'favicon' ? '.ico' : '.png');
+    const filename = `${type}-${Date.now()}${fileExt}`;
+    const destinationPath = join(uploadsDir, filename);
+
+    fs.writeFileSync(destinationPath, file.buffer);
+
+    const relativeUrl = `/uploads/branding/${filename}`;
+    const setting = await this.getPlatformBranding();
+    if (type === 'logo') {
+      setting.logoUrl = relativeUrl;
+    } else {
+      setting.faviconUrl = relativeUrl;
+    }
+    return this.platformSettingRepository.save(setting);
   }
 }

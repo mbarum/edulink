@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import api from '../services/api';
 import { UserRole } from '../../../src/common/user-role.enum';
 import { Users, UserCheck, DollarSign, Activity, LogOut, Settings, GraduationCap, Calendar, FileText, CreditCard } from 'lucide-react';
+import LanguageSelector from '../components/LanguageSelector';
 
 interface DashboardStats {
   totalStudents: number;
@@ -13,6 +15,7 @@ interface DashboardStats {
 
 const DashboardPage: React.FC = () => {
   const { user, logout } = useAuth();
+  const { t } = useLanguage();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -45,50 +48,57 @@ const DashboardPage: React.FC = () => {
       <aside className="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col">
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-2xl font-bold text-blue-600">SaaSLink</h2>
-          <p className="text-sm text-gray-500 mt-1">School Management</p>
+          <p className="text-sm text-gray-500 mt-1">{t('dashboard.schoolManagement', 'School Management')}</p>
         </div>
         <nav className="flex-1 p-4 space-y-1">
           <a href="/dashboard" className="flex items-center px-4 py-3 text-blue-600 bg-blue-50 rounded-lg font-medium">
             <Activity className="w-5 h-5 mr-3" />
-            Dashboard
+            {t('nav.dashboard', 'Dashboard')}
           </a>
           <a href="/academics/classes" className="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
             <GraduationCap className="w-5 h-5 mr-3" />
-            Academics
+            {t('nav.academics', 'Academics')}
           </a>
           <a href="/staff" className="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
             <UserCheck className="w-5 h-5 mr-3" />
-            Staff
+            {t('nav.staff', 'Staff')}
+          </a>
+          <a href="/students" className="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
+            <Users className="w-5 h-5 mr-3" />
+            {t('nav.students', 'Students')}
           </a>
           <a href="/attendance" className="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
             <Calendar className="w-5 h-5 mr-3" />
-            Attendance
+            {t('nav.attendance', 'Attendance')}
           </a>
           <a href="/reports" className="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
             <FileText className="w-5 h-5 mr-3" />
-            Reports
+            {t('nav.reports', 'Reports')}
           </a>
           <a href="/payments" className="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
             <CreditCard className="w-5 h-5 mr-3" />
-            Payments
+            {t('nav.payments', 'Payments')}
           </a>
           {user?.role === UserRole.ADMIN && (
             <a href="/settings" className="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors mt-2">
               <Settings className="w-5 h-5 mr-3" />
-              Settings
+              {t('nav.settings', 'Settings')}
             </a>
           )}
           {user?.role === UserRole.SUPER_ADMIN && (
             <a href="/super-admin" className="flex items-center px-4 py-3 text-purple-600 hover:bg-purple-50 rounded-lg font-medium transition-colors mt-4 border border-purple-100">
               <Settings className="w-5 h-5 mr-3" />
-              Super Admin
+              {t('nav.superAdmin', 'Super Admin')}
             </a>
           )}
         </nav>
-        <div className="p-4 border-t border-gray-200">
+        <div className="p-4 border-t border-gray-200 space-y-3">
+          <div className="px-1">
+            <LanguageSelector variant="light" className="w-full" />
+          </div>
           <button onClick={logout} className="flex items-center w-full px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg font-medium transition-colors">
             <LogOut className="w-5 h-5 mr-3" />
-            Logout
+            {t('nav.logout', 'Logout')}
           </button>
         </div>
       </aside>
@@ -98,11 +108,22 @@ const DashboardPage: React.FC = () => {
         <div className="max-w-6xl mx-auto">
           <header className="flex justify-between items-center mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Welcome back, {user?.username}</h1>
-              <p className="text-gray-500 mt-1">Here's what's happening at your school today.</p>
+              <h1 className="text-3xl font-bold text-gray-900">
+                {t('dashboard.welcomeBack', 'Welcome back')}, {user?.username}
+              </h1>
+              <p className="text-gray-500 mt-1">
+                {t('dashboard.subheading', "Here's what's happening at your school today.")}
+              </p>
             </div>
-            <div className="md:hidden">
-              <button onClick={logout} className="text-red-600 font-medium">Logout</button>
+            <div className="flex items-center space-x-4">
+              <div className="hidden sm:block">
+                <LanguageSelector variant="light" />
+              </div>
+              <div className="md:hidden">
+                <button onClick={logout} className="text-red-600 font-medium">
+                  {t('nav.logout', 'Logout')}
+                </button>
+              </div>
             </div>
           </header>
 
@@ -113,7 +134,7 @@ const DashboardPage: React.FC = () => {
                 <Users className="w-8 h-8 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-500">Total Students</p>
+                <p className="text-sm font-medium text-gray-500">{t('dashboard.totalStudents', 'Total Students')}</p>
                 <p className="text-3xl font-bold text-gray-900">{stats?.totalStudents || 0}</p>
               </div>
             </div>
@@ -122,7 +143,7 @@ const DashboardPage: React.FC = () => {
                 <UserCheck className="w-8 h-8 text-green-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-500">Total Staff</p>
+                <p className="text-sm font-medium text-gray-500">{t('dashboard.totalStaff', 'Total Staff')}</p>
                 <p className="text-3xl font-bold text-gray-900">{stats?.totalStaff || 0}</p>
               </div>
             </div>
@@ -131,7 +152,7 @@ const DashboardPage: React.FC = () => {
                 <DollarSign className="w-8 h-8 text-purple-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-500">Revenue (This Month)</p>
+                <p className="text-sm font-medium text-gray-500">{t('dashboard.revenueMonth', 'Revenue (This Month)')}</p>
                 <p className="text-3xl font-bold text-gray-900">${stats?.revenueThisMonth?.toLocaleString() || 0}</p>
               </div>
             </div>
@@ -140,16 +161,20 @@ const DashboardPage: React.FC = () => {
           {/* Recent Activity */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center">
-              <h2 className="text-lg font-bold text-gray-900">Recently Added Students</h2>
-              <a href="/students" className="text-sm font-medium text-blue-600 hover:text-blue-700">View all</a>
+              <h2 className="text-lg font-bold text-gray-900">
+                {t('dashboard.recentlyAddedStudents', 'Recently Added Students')}
+              </h2>
+              <a href="/students" className="text-sm font-medium text-blue-600 hover:text-blue-700">
+                {t('dashboard.viewAll', 'View all')}
+              </a>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-gray-50 text-gray-500 text-sm">
-                    <th className="px-6 py-4 font-medium">Name</th>
-                    <th className="px-6 py-4 font-medium">Email</th>
-                    <th className="px-6 py-4 font-medium text-right">Action</th>
+                    <th className="px-6 py-4 font-medium">{t('dashboard.name', 'Name')}</th>
+                    <th className="px-6 py-4 font-medium">{t('dashboard.email', 'Email')}</th>
+                    <th className="px-6 py-4 font-medium text-right">{t('dashboard.action', 'Action')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -159,14 +184,16 @@ const DashboardPage: React.FC = () => {
                         <td className="px-6 py-4 font-medium text-gray-900">{student.name}</td>
                         <td className="px-6 py-4 text-gray-500">{student.email}</td>
                         <td className="px-6 py-4 text-right">
-                          <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">View</button>
+                          <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                            {t('dashboard.view', 'View')}
+                          </button>
                         </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
                       <td colSpan={3} className="px-6 py-8 text-center text-gray-500">
-                        No students found. Add some students to see them here.
+                        {t('dashboard.noStudents', 'No students found. Add some students to see them here.')}
                       </td>
                     </tr>
                   )}

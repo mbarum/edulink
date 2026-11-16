@@ -1,7 +1,9 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, Index } from 'typeorm';
 import { TenantAwareEntity } from 'src/core/tenancy/tenant-aware.entity';
 
 @Entity({ name: 'expenses' })
+@Index(['tenantId', 'date'])
+@Index(['tenantId', 'category'])
 export class Expense extends TenantAwareEntity {
   @Column()
   category: string;

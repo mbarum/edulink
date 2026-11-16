@@ -7,13 +7,14 @@ import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import * as express from 'express';
+import * as fs from 'fs';
 import { join } from 'path';
 
 async function bootstrap() {
   const app = await NestFactory.create(
     AppModule,
     new ExpressAdapter(),
-    { cors: true }
+    { cors: true, rawBody: true }
   );
 
   app.useGlobalPipes(
@@ -73,6 +74,16 @@ async function bootstrap() {
     origin: frontendUrl,
     credentials: true,
   });
+
+  // Ensure public/uploads and branding folders exist
+  const uploadsPath = join(process.cwd(), 'public', 'uploads');
+  const brandingUploadsPath = join(uploadsPath, 'branding');
+  if (!fs.existsSync(brandingUploadsPath)) {
+    fs.mkdirSync(brandingUploadsPath, { recursive: true });
+  }
+
+  // Serve uploaded assets (logos, favicons, reports)
+  app.use('/uploads', express.static(uploadsPath));
 
   app.setGlobalPrefix('api');
 

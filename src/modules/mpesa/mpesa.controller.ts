@@ -5,7 +5,9 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Req,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import { MpesaService } from './mpesa.service';
 import { StkPushDto } from './dto/stk-push.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -30,7 +32,10 @@ export class MpesaController {
 
   @Post('callback')
   @HttpCode(HttpStatus.OK)
-  handleCallback(@Body() body: Record<string, any>) {
-    return this.mpesaService.handleCallback(body);
+  handleCallback(
+    @Body() body: Record<string, any>,
+    @Req() req: Request,
+  ) {
+    return this.mpesaService.handleCallback(body, req);
   }
 }

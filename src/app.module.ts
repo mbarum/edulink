@@ -1,9 +1,13 @@
 import { Module } from '@nestjs/common';
+import { HealthController } from './health.controller';
+import { BrandingController } from './branding.controller';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
 import { BullModule } from '@nestjs/bull';
+import { CacheModule } from '@nestjs/cache-manager';
+import { redisStore } from 'cache-manager-redis-yet';
 import { LmsModule } from './modules/lms/lms.module';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 import { MpesaModule } from './modules/mpesa/mpesa.module';
@@ -98,6 +102,20 @@ import { SubscriptionGuard } from './modules/auth/guards/subscription.guard';
       }),
       inject: [ConfigService],
     }),
+    CacheModule.registerAsync({
+      isGlobal: true,
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        store: await redisStore({
+          socket: {
+            host: configService.get<string>('REDIS_HOST') || 'localhost',
+            port: configService.get<number>('REDIS_PORT') || 6379,
+          },
+          ttl: 60000, // 60 seconds TTL globally by default
+        }),
+      }),
+      inject: [ConfigService],
+    }),
     // Core Modules
     TenancyModule,
     AuditModule,
@@ -135,7 +153,7 @@ import { SubscriptionGuard } from './modules/auth/guards/subscription.guard';
     // Config
     AppConfigModule,
   ],
-  controllers: [], // Root controllers are removed for modularity
+  controllers: [HealthController, BrandingController],
   providers: [
     {
       provide: APP_GUARD,

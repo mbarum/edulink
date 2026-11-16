@@ -99,14 +99,15 @@ export class TenantMiddleware implements NestMiddleware {
       if (!tenant) {
         throw new NotFoundException('Tenant not found');
       }
-      this.tenancyService.setTenant(tenant);
+      return TenancyService.runWithTenant(tenant, () => {
+        this.tenancyService.setTenant(tenant);
+        next();
+      });
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
       }
       throw new NotFoundException('Invalid Tenant ID');
     }
-
-    next();
   }
 }

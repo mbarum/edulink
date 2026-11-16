@@ -3,6 +3,8 @@ import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 import { Users, BookOpen, Calendar, CheckSquare, Clock, LogOut, Bell, MessageSquare, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../contexts/LanguageContext';
+import LanguageSelector from '../components/LanguageSelector';
 
 interface TeacherStats {
   totalStudents: number;
@@ -24,6 +26,7 @@ interface TeacherStats {
 
 const TeacherDashboardPage: React.FC = () => {
   const { user, logout } = useAuth();
+  const { t } = useLanguage();
   const [stats, setStats] = useState<TeacherStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -56,38 +59,37 @@ const TeacherDashboardPage: React.FC = () => {
       <aside className="w-64 bg-white border-r border-gray-200 hidden md:flex flex-col">
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-2xl font-bold text-indigo-600">SaaSLink</h2>
-          <p className="text-sm text-gray-500 mt-1">Teacher Portal</p>
+          <p className="text-sm text-gray-500 mt-1">{t('nav.teacherPortal', 'Teacher Portal')}</p>
         </div>
         <nav className="flex-1 p-4 space-y-1">
           <Link to="/teacher" className="flex items-center px-4 py-3 text-indigo-600 bg-indigo-50 rounded-lg font-medium">
             <BookOpen className="w-5 h-5 mr-3" />
-            My Dashboard
+            {t('nav.dashboard', 'My Dashboard')}
           </Link>
           <Link to="/teacher/classes" className="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
             <Users className="w-5 h-5 mr-3" />
-            My Classes
+            {t('teacher.myClasses', 'My Classes')}
           </Link>
           <Link to="/teacher/attendance" className="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
             <CheckSquare className="w-5 h-5 mr-3" />
-            Attendance
+            {t('nav.attendance', 'Attendance')}
           </Link>
           <Link to="/teacher/grading" className="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
             <Award className="w-5 h-5 mr-3" />
-            Grading
+            {t('teacher.grading', 'Grading')}
           </Link>
           <a href="#" className="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
             <Calendar className="w-5 h-5 mr-3" />
-            Schedule
-          </a>
-          <a href="#" className="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors">
-            <MessageSquare className="w-5 h-5 mr-3" />
-            Messages
+            {t('timetable.title', 'Schedule')}
           </a>
         </nav>
-        <div className="p-4 border-t border-gray-200">
+        <div className="p-4 border-t border-gray-200 space-y-3">
+          <div className="px-1">
+            <LanguageSelector variant="light" className="w-full" />
+          </div>
           <button onClick={logout} className="flex items-center w-full px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg font-medium transition-colors">
             <LogOut className="w-5 h-5 mr-3" />
-            Logout
+            {t('nav.logout', 'Logout')}
           </button>
         </div>
       </aside>
@@ -97,16 +99,19 @@ const TeacherDashboardPage: React.FC = () => {
         <div className="max-w-6xl mx-auto">
           <header className="flex justify-between items-center mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Good morning, {user?.username}</h1>
-              <p className="text-gray-500 mt-1">Here is your schedule and tasks for today.</p>
+              <h1 className="text-3xl font-bold text-gray-900">{t('dashboard.welcomeBack', 'Welcome back')}, {user?.username}</h1>
+              <p className="text-gray-500 mt-1">{t('dashboard.subheading', "Here's what's happening at your school today.")}</p>
             </div>
             <div className="flex items-center space-x-4">
+              <div className="hidden sm:block">
+                <LanguageSelector variant="light" />
+              </div>
               <button className="p-2 text-gray-400 hover:text-indigo-600 transition-colors relative">
                 <Bell className="w-6 h-6" />
                 <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-gray-50"></span>
               </button>
               <div className="md:hidden">
-                <button onClick={logout} className="text-red-600 font-medium">Logout</button>
+                <button onClick={logout} className="text-red-600 font-medium">{t('nav.logout', 'Logout')}</button>
               </div>
             </div>
           </header>

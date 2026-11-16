@@ -40,10 +40,16 @@ async function createSuperAdmin() {
     console.log('System tenant created');
   }
 
-  const username = 'systems@saaslink.tech';
-  const password = 'revolution2026';
+  const username = process.env.SUPER_ADMIN_EMAIL || process.env.SUPER_ADMIN_USERNAME;
+  const password = process.env.SUPER_ADMIN_PASSWORD;
 
-  const salt = await bcrypt.genSalt();
+  if (!username || !password) {
+    throw new Error(
+      'CRITICAL CONFIGURATION ERROR: SUPER_ADMIN_EMAIL (or SUPER_ADMIN_USERNAME) and SUPER_ADMIN_PASSWORD environment variables must be set.',
+    );
+  }
+
+  const salt = await bcrypt.genSalt(12);
   const hashedPassword = await bcrypt.hash(password, salt);
 
   let superAdmin = await userRepository.findOne({ where: { username } });

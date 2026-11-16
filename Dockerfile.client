@@ -1,0 +1,43 @@
+# ==============================================================================
+# Multi-Stage Dockerfile for SaaSLink Frontend SPA & Nginx Reverse Proxy
+# ==============================================================================
+
+# Stage 1: Build React 19 SPA
+FROM node:20-alpine AS builder
+
+WORKDIR /usr/src/app
+
+# Install dependencies from root and client
+COPY package*.json ./
+COPY client/package*.json ./client/
+RUN cd client && npm ci
+
+# Copy client source code and assets
+COPY client/ ./client/
+COPY src/common/ ./src/common/
+
+# Build static bundle with Vite
+RUN cd client && npm run build
+
+# Stage 2: Production Web Server (Hardened Nginx)
+FROM nginx:1.27-alpine AS runner
+
+# Remove default nginx static assets and configuration
+RUN rm -rf /usr/share/nginx/html/* /etc/nginx/conf.d/default.conf
+
+# Copy hardened nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copy compiled client assets from builder
+COPY --from=builder /usr/src/app/dist/client /usr/share/nginx/html
+
+# Create cache and run directories with proper permissions
+RUN touch /var/run/nginx.pid && \
+    chown -R nginx:nginx /var/run/nginx.pid /var/cache/nginx /usr/share/nginx/html
+
+EXPOSE 80
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
+
+CMD ["nginx", "-g", "daemon off;"]

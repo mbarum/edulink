@@ -2,11 +2,13 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
+import { UserRole } from 'src/common/user-role.enum';
 import { TenancyService } from 'src/core/tenancy/tenancy.service';
 import { TenantAwareCrudService } from 'src/core/common/tenant-aware-crud.service';
 
@@ -23,6 +25,12 @@ export class UsersService extends TenantAwareCrudService<User> {
   async create(userDto: Partial<User>): Promise<User> {
     // Security: Prevent setting id manually
     Reflect.deleteProperty(userDto, 'id');
+
+    if (userDto.role === UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException(
+        'Cannot create Super Admin accounts from tenant endpoints',
+      );
+    }
 
     let password_hash = userDto.password_hash;
     if (password_hash) {
@@ -60,6 +68,16 @@ export class UsersService extends TenantAwareCrudService<User> {
     });
     if (!user) {
       throw new NotFoundException('User not found');
+    }
+
+    if (user.role === UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException(
+        'Cannot modify Super Admin accounts from tenant endpoints',
+      );
+    }
+
+    if (userDto.role === UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException('Cannot assign Super Admin role');
     }
 
     // Security: Prevent updating tenantId or id
@@ -127,8 +145,8 @@ export class UsersService extends TenantAwareCrudService<User> {
     const hashedPassword = await bcrypt.hash(password, salt);
     await this.userRepository.update(id, {
       password_hash: hashedPassword,
-      password_reset_token: undefined,
-      password_reset_expires: undefined,
+      password_reset_token: null as any,
+      password_reset_expires: null as any,
     });
     return this.userRepository.findOne({ where: { id } });
   }

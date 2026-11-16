@@ -1,10 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import axios from 'axios';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { firstValueFrom } from 'rxjs';
+import type { Request } from 'express';
 import { Tenant } from '../tenants/entities/tenant.entity';
 import {
   PendingPayment,
@@ -216,11 +217,49 @@ export class MpesaService {
     }
   }
 
-  async handleCallback(callbackData: Record<string, any>): Promise<any> {
+  async handleCallback(
+    callbackData: Record<string, any>,
+    req?: Request,
+  ): Promise<any> {
     console.log('M-Pesa Callback Received:', JSON.stringify(callbackData, null, 2));
 
+    // Security Verification: Token and IP Filtering
+    if (req) {
+      const webhookSecret = this.configService.get<string>('MPESA_WEBHOOK_SECRET');
+      if (webhookSecret) {
+        const token =
+          req.headers['x-mpesa-token'] || (req.query?.token as string);
+        if (token !== webhookSecret) {
+          console.warn('Unauthorized M-Pesa webhook callback token rejected');
+          throw new ForbiddenException('Invalid M-Pesa webhook authentication token');
+        }
+      }
+
+      const allowedIps = this.configService.get<string>('MPESA_ALLOWED_IPS');
+      if (allowedIps) {
+        const clientIp =
+          (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+          req.ip ||
+          req.socket.remoteAddress;
+        const ipList = allowedIps.split(',').map((ip) => ip.trim());
+        if (!ipList.some((allowed) => clientIp?.startsWith(allowed))) {
+          console.warn(`Unauthorized client IP for M-Pesa webhook: ${clientIp}`);
+          throw new ForbiddenException(`Unauthorized client IP for M-Pesa callback: ${clientIp}`);
+        }
+      }
+    }
+
     const body = callbackData.Body as
-      | { stkCallback?: { ResultCode: number; ResultDesc: string; CheckoutRequestID: string } }
+      | {
+          stkCallback?: {
+            ResultCode: number;
+            ResultDesc: string;
+            CheckoutRequestID: string;
+            CallbackMetadata?: {
+              Item?: Array<{ Name: string; Value?: any }>;
+            };
+          };
+        }
       | undefined;
     
     if (!body || !body.stkCallback) {
@@ -228,7 +267,8 @@ export class MpesaService {
       return { ResultCode: 1, ResultDesc: 'Invalid body' };
     }
 
-    const { ResultCode, ResultDesc, CheckoutRequestID } = body.stkCallback;
+    const { ResultCode, ResultDesc, CheckoutRequestID, CallbackMetadata } =
+      body.stkCallback;
 
     if (ResultCode === 0) {
       console.log(`M-Pesa Payment Successful for CheckoutRequestID: ${CheckoutRequestID}`);
@@ -238,6 +278,26 @@ export class MpesaService {
       });
 
       if (pendingPayment) {
+        if (pendingPayment.isApproved) {
+          console.warn(`Replay detected: CheckoutRequestID ${CheckoutRequestID} has already been approved.`);
+          return { ResultCode: 0, ResultDesc: 'Payment already processed' };
+        }
+
+        // Validate received amount against pending payment record
+        if (CallbackMetadata?.Item && Array.isArray(CallbackMetadata.Item)) {
+          const amountItem = CallbackMetadata.Item.find(
+            (item) => item.Name === 'Amount',
+          );
+          if (amountItem && typeof amountItem.Value === 'number') {
+            if (amountItem.Value < pendingPayment.amount) {
+              console.error(
+                `Payment Fraud Alert: Received ${amountItem.Value} but expected ${pendingPayment.amount} for CheckoutRequestID ${CheckoutRequestID}`,
+              );
+              return { ResultCode: 1, ResultDesc: 'Paid amount less than expected order amount' };
+            }
+          }
+        }
+
         pendingPayment.isApproved = true;
         await this.pendingPaymentRepository.save(pendingPayment);
 

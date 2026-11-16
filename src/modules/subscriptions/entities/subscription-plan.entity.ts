@@ -1,9 +1,8 @@
 import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { BillingModel, BillingInterval } from 'src/common/subscription.enums';
 
-export enum PlanInterval {
-  MONTH = 'month',
-  YEAR = 'year',
-}
+export type PlanInterval = BillingInterval;
+export const PlanInterval = BillingInterval;
 
 @Entity({ name: 'subscription_plans' })
 export class SubscriptionPlan {
@@ -11,21 +10,41 @@ export class SubscriptionPlan {
   id: string;
 
   @Column({ unique: true })
-  name: string; // e.g., 'Basic', 'Premium'
+  name: string; // e.g., 'Starter School Plan', 'Per-Student Term Plan'
 
-  @Column()
+  @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column()
-  price: number; // Price in the smallest currency unit (e.g., cents)
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  price: number; // Flat fee amount or rate per student
 
-  @Column({ type: 'simple-enum', enum: PlanInterval, default: PlanInterval.MONTH })
-  interval: PlanInterval;
+  @Column({
+    type: 'simple-enum',
+    enum: BillingModel,
+    default: BillingModel.FLAT_FEE,
+  })
+  billingModel: BillingModel; // 'flat_fee' | 'per_student'
 
-  @Column()
-  stripePriceId: string; // The ID of the price object in Stripe
+  @Column({
+    type: 'simple-enum',
+    enum: BillingInterval,
+    default: BillingInterval.MONTH,
+  })
+  interval: BillingInterval; // 'month' | 'term' | 'year'
 
-  @Column('simple-json')
+  @Column({ default: 'KES' })
+  currency: string; // 'KES', 'USD', etc.
+
+  @Column({ nullable: true })
+  maxStudents: number; // null or 0 for unlimited
+
+  @Column({ default: 0 })
+  trialDays: number;
+
+  @Column({ nullable: true })
+  stripePriceId: string;
+
+  @Column('simple-json', { nullable: true })
   features: string[];
 
   @Column({ default: true })

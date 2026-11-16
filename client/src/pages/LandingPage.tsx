@@ -14,28 +14,38 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../contexts/LanguageContext';
+import LanguageSelector from '../components/LanguageSelector';
+import WhatsAppButton from '../components/WhatsAppButton';
 
 const LandingPage = () => {
+  const { t } = useLanguage();
+
   const benefits = [
     {
+      icon: <BookOpen className="w-6 h-6 text-brand-sand" />,
+      title: t('landing.benefit1Title', 'Interactive E-Learning'),
+      description: t('landing.benefit1Desc', 'Host courses, manage learning paths, and distribute digital assignments seamlessly.')
+    },
+    {
       icon: <GraduationCap className="w-6 h-6 text-brand-sand" />,
-      title: "Academic Excellence",
-      description: "Streamline grading, report cards, and curriculum tracking so teachers can focus on teaching."
+      title: t('landing.benefit2Title', 'Advanced Tracking'),
+      description: t('landing.benefit2Desc', 'Automated grading, custom rubrics, and rich report cards that track true student progression.')
     },
     {
       icon: <CreditCard className="w-6 h-6 text-brand-sand" />,
-      title: "Financial Clarity",
-      description: "Automated fee collection via M-Pesa and Stripe. Real-time financial health at your fingertips."
+      title: t('landing.benefit3Title', 'Financial Clarity'),
+      description: t('landing.benefit3Desc', 'Automated fee collection via M-Pesa and Stripe. Real-time financial health at your fingertips.')
     },
     {
-      icon: <MessageSquare className="w-6 h-6 text-brand-sand" />,
-      title: "Parent Engagement",
-      description: "Keep parents informed with instant notifications on attendance, grades, and school events."
+      icon: <Users className="w-6 h-6 text-brand-sand" />,
+      title: t('landing.benefit4Title', 'Connected Portals'),
+      description: t('landing.benefit4Desc', 'Give parents a dedicated window into real-time attendance, grades, and direct teacher communication.')
     },
     {
       icon: <ShieldCheck className="w-6 h-6 text-brand-sand" />,
-      title: "Data Security",
-      description: "Enterprise-grade protection for student records and institutional data, compliant with local laws."
+      title: t('landing.benefit5Title', 'Data Security'),
+      description: t('landing.benefit5Desc', 'Enterprise-grade protection for student records and institutional data, compliant with local laws.')
     }
   ];
 
@@ -52,17 +62,18 @@ const LandingPage = () => {
           </div>
 
           <div className="hidden md:flex items-center space-x-8 text-sm font-semibold text-brand-green/70">
-            <a href="#features" className="hover:text-brand-green transition-colors">Features</a>
-            <Link to="/pricing" className="hover:text-brand-green transition-colors">Pricing</Link>
-            <a href="#about" className="hover:text-brand-green transition-colors">About</a>
+            <a href="#features" className="hover:text-brand-green transition-colors">{t('nav.features', 'Features')}</a>
+            <Link to="/pricing" className="hover:text-brand-green transition-colors">{t('nav.pricing', 'Pricing')}</Link>
+            <a href="#about" className="hover:text-brand-green transition-colors">{t('nav.about', 'About')}</a>
           </div>
 
           <div className="flex items-center space-x-4">
+            <LanguageSelector variant="light" />
             <Link to="/login" className="text-sm font-bold text-brand-green hover:opacity-70 transition-opacity">
-              Sign In
+              {t('nav.signIn', 'Sign In')}
             </Link>
             <Link to="/register" className="px-6 py-3 bg-brand-green text-brand-white rounded-full text-sm font-bold hover:bg-brand-green-light transition-all shadow-lg shadow-brand-green/10">
-              Get Started
+              {t('nav.getStarted', 'Get Started')}
             </Link>
           </div>
         </div>
@@ -82,22 +93,22 @@ const LandingPage = () => {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-sand opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-sand"></span>
                 </span>
-                <span>Trusted by 500+ Schools</span>
+                <span>{t('landing.trustedBy', 'Trusted by 500+ Schools')}</span>
               </div>
               <h1 className="text-6xl md:text-7xl font-bold tracking-tighter leading-[0.9] mb-8 text-brand-green">
-                The Complete <br />
-                <span className="text-brand-sand italic font-serif">Operating System</span> <br />
-                for Your School.
+                {t('landing.heroTitle1', 'The Complete')} <br />
+                <span className="text-brand-sand italic font-serif">{t('landing.heroTitle2', 'Education Management')}</span> <br />
+                {t('landing.heroTitle3', 'Platform.')}
               </h1>
               <p className="text-xl text-brand-green/70 leading-relaxed mb-10 max-w-lg">
-                SaaSLink EMIS simplifies every aspect of school management. From enrollment to graduation, we provide the tools you need to run a world-class institution.
+                {t('landing.heroSubtitle', 'SaaSLink empowers your entire educational ecosystem. From interactive student learning paths to real-time parent portals, experience true digital transformation.')}
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link to="/register" className="px-10 py-5 bg-brand-green text-brand-white rounded-full font-bold text-lg hover:scale-105 transition-transform flex items-center justify-center shadow-xl shadow-brand-green/20">
-                  Start Free Trial <ArrowRight className="ml-2 w-5 h-5" />
+                  {t('landing.getStarted', 'Get Started')} <ArrowRight className="ml-2 w-5 h-5" />
                 </Link>
                 <button className="px-10 py-5 border-2 border-brand-green/10 rounded-full font-bold text-lg hover:bg-brand-green/5 transition-colors flex items-center justify-center">
-                  <PlayCircle className="mr-2 w-5 h-5" /> Watch Demo
+                  <PlayCircle className="mr-2 w-5 h-5" /> {t('landing.viewDemo', 'Explore Features')}
                 </button>
               </div>
             </motion.div>
@@ -138,8 +149,12 @@ const LandingPage = () => {
       <section id="features" className="py-32 bg-brand-white">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-20">
-            <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-brand-green mb-6">Built for the modern educator.</h2>
-            <p className="text-lg text-brand-green/60">We've spent years working with school administrators to build a platform that actually solves your daily headaches.</p>
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-brand-green mb-6">
+              {t('landing.featuresHeading', 'Built for true educational immersion.')}
+            </h2>
+            <p className="text-lg text-brand-green/60">
+              {t('landing.featuresSubtitle', "We've spent years working with educators to build an environment that bridges the gap between administrators, teachers, students, and parents.")}
+            </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -163,7 +178,9 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-20 items-center">
             <div>
-              <h2 className="text-5xl font-bold tracking-tight mb-8">Switching is easier than you think.</h2>
+              <h2 className="text-5xl font-bold tracking-tight mb-8">
+                {t('landing.ctaHeading', 'Ready to transform your school?')}
+              </h2>
               <div className="space-y-8">
                 <div className="flex items-start space-x-4">
                   <div className="w-8 h-8 bg-brand-sand text-brand-dark rounded-full flex items-center justify-center font-bold flex-shrink-0">1</div>
@@ -209,7 +226,7 @@ const LandingPage = () => {
                   ))}
                 </div>
                 <Link to="/register" className="mt-10 w-full py-5 bg-brand-sand text-brand-dark rounded-2xl font-bold text-lg hover:brightness-110 transition-all flex items-center justify-center">
-                  Create Your Account
+                  {t('landing.getStarted', 'Get Started')}
                 </Link>
               </div>
             </div>
@@ -228,16 +245,22 @@ const LandingPage = () => {
               <span className="text-xl font-bold tracking-tight text-brand-green">SaaSLink</span>
             </div>
             <div className="flex space-x-8 text-sm font-bold uppercase tracking-widest text-brand-green/40">
-              <Link to="/privacy" className="hover:text-brand-green transition-colors">Privacy</Link>
-              <Link to="/terms" className="hover:text-brand-green transition-colors">Terms</Link>
-              <Link to="/contact" className="hover:text-brand-green transition-colors">Contact</Link>
+              <Link to="/privacy" className="hover:text-brand-green transition-colors">{t('landing.privacy', 'Privacy')}</Link>
+              <Link to="/terms" className="hover:text-brand-green transition-colors">{t('landing.terms', 'Terms')}</Link>
+              <Link to="/contact" className="hover:text-brand-green transition-colors">{t('nav.contact', 'Contact')}</Link>
             </div>
-            <div className="text-sm text-brand-green/40">
-              © 2026 SaaSLink Technologies.
+            <div className="flex items-center space-x-4">
+              <LanguageSelector variant="light" />
+              <div className="text-sm text-brand-green/40">
+                © 2026 SaaSLink Technologies. {t('landing.rightsReserved', 'All rights reserved.')}
+              </div>
             </div>
           </div>
         </div>
       </footer>
+
+      {/* Floating WhatsApp & Direct Contact Button */}
+      <WhatsAppButton />
     </div>
   );
 };

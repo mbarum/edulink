@@ -6,6 +6,8 @@ import {
   Param,
   Body,
   UseGuards,
+  Req,
+  ForbiddenException,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -27,7 +29,19 @@ export class UsersController {
 
   @Patch(':id')
   @Roles(UserRole.ADMIN)
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDto,
+    @Req() req: any,
+  ) {
+    if (
+      updateUserDto.role === UserRole.SUPER_ADMIN &&
+      req.user?.role !== UserRole.SUPER_ADMIN
+    ) {
+      throw new ForbiddenException(
+        'Only Super Admins can assign the Super Admin role',
+      );
+    }
     return this.usersService.update(id, updateUserDto);
   }
 

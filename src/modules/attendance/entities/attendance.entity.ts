@@ -1,7 +1,11 @@
-import { Entity, Column, ManyToOne } from 'typeorm';
+import { Entity, Column, ManyToOne, Index } from 'typeorm';
 import { TenantAwareEntity } from 'src/core/tenancy/tenant-aware.entity';
 import { Student } from 'src/modules/students/entities/student.entity';
 
+@Index(['tenantId', 'studentId'])
+@Index(['tenantId', 'classLevelId'])
+@Index(['tenantId', 'date'])
+@Index(['tenantId', 'status'])
 @Entity({ name: 'attendance' })
 export class Attendance extends TenantAwareEntity {
   @Column()

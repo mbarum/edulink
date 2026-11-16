@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { TenantAwareCacheInterceptor } from 'src/core/interceptors/tenant-aware-cache.interceptor';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -27,11 +28,13 @@ export class StudentsController {
   }
 
   @Get()
+  @UseInterceptors(TenantAwareCacheInterceptor)
   findAll() {
     return this.studentsService.findAll();
   }
 
   @Get(':id')
+  @UseInterceptors(TenantAwareCacheInterceptor)
   findOne(@Param('id') id: string) {
     return this.studentsService.findOne(id);
   }

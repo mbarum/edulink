@@ -16,6 +16,52 @@ interface RequestWithUser extends Request {
   };
 }
 
+const SENSITIVE_KEYS = new Set([
+  'password',
+  'password_hash',
+  'adminpassword',
+  'currentpassword',
+  'newpassword',
+  'token',
+  'refreshtoken',
+  'secret',
+  'jwt_secret',
+  'encryption_key',
+  'credential1',
+  'credential2',
+  'cardnumber',
+  'cvv',
+  'cvc',
+  'authorization',
+  'passkey',
+  'consumersecret',
+]);
+
+/**
+ * @description Recursively masks sensitive fields such as passwords, tokens, and payment details
+ * before persisting payload into audit log storage.
+ */
+function sanitizeForAudit(obj: any): any {
+  if (!obj || typeof obj !== 'object') {
+    return obj;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map((item) => sanitizeForAudit(item));
+  }
+  const sanitized: Record<string, any> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    const normalizedKey = key.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (SENSITIVE_KEYS.has(normalizedKey)) {
+      sanitized[key] = '[REDACTED]';
+    } else if (value && typeof value === 'object') {
+      sanitized[key] = sanitizeForAudit(value);
+    } else {
+      sanitized[key] = value;
+    }
+  }
+  return sanitized;
+}
+
 @Injectable()
 export class AuditInterceptor implements NestInterceptor {
   constructor(private readonly auditService: AuditService) {}
@@ -42,6 +88,8 @@ export class AuditInterceptor implements NestInterceptor {
           (body as { id?: string })?.id ||
           request.params?.id) as string;
 
+        const sanitizedBody = sanitizeForAudit(body);
+
         this.auditService
           .log({
             tenantId,
@@ -49,7 +97,7 @@ export class AuditInterceptor implements NestInterceptor {
             action: method,
             entity,
             entityId,
-            newValue: JSON.stringify(body),
+            newValue: sanitizedBody ? JSON.stringify(sanitizedBody) : undefined,
             ipAddress: ip,
             userAgent: headers['user-agent'],
           })

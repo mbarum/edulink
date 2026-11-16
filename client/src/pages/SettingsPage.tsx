@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Settings, Save, AlertCircle, CheckCircle } from 'lucide-react';
 import api from '../services/api';
+import { useLanguage } from '../contexts/LanguageContext';
+import LanguageSelector from '../components/LanguageSelector';
+import { SupportedLanguage } from '../i18n/translations';
 
 interface TenantSettings {
   schoolName: string;
@@ -12,6 +15,7 @@ interface TenantSettings {
 }
 
 const SettingsPage: React.FC = () => {
+  const { t, currentLanguage, setLanguage, supportedLanguages } = useLanguage();
   const [settings, setSettings] = useState<TenantSettings>({
     schoolName: '',
     contactEmail: '',
@@ -39,13 +43,13 @@ const SettingsPage: React.FC = () => {
         });
       } catch (error) {
         console.error('Failed to load settings', error);
-        setMessage({ type: 'error', text: 'Struggled to connect to configuration server.' });
+        setMessage({ type: 'error', text: t('settings.connectionError', 'Struggled to connect to configuration server.') });
       } finally {
         setIsLoading(false);
       }
     };
     fetchSettings();
-  }, []);
+  }, [t]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -59,13 +63,13 @@ const SettingsPage: React.FC = () => {
 
     try {
       await api.patch('/settings', settings);
-      setMessage({ type: 'success', text: 'School settings successfully updated!' });
+      setMessage({ type: 'success', text: t('settings.successMessage', 'School settings successfully updated!') });
     } catch (error) {
       console.error('Failed to save settings', error);
-      setMessage({ type: 'error', text: 'Failed to update settings. Please try again.' });
+      setMessage({ type: 'error', text: t('settings.errorMessage', 'Failed to update settings. Please try again.') });
     } finally {
       setIsSaving(false);
-      setTimeout(() => setMessage(null), 5000); // Clear message seamlessly
+      setTimeout(() => setMessage(null), 5000);
     }
   };
 
@@ -80,9 +84,14 @@ const SettingsPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-6 md:p-12">
       <div className="max-w-3xl mx-auto">
-        <div className="flex items-center space-x-3 mb-8 text-indigo-600">
-          <Settings className="h-8 w-8" />
-          <h1 className="text-3xl font-extrabold text-gray-900">School Configuration</h1>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center space-x-3 text-indigo-600">
+            <Settings className="h-8 w-8" />
+            <h1 className="text-3xl font-extrabold text-gray-900">
+              {t('settings.title', 'School Configuration')}
+            </h1>
+          </div>
+          <LanguageSelector variant="light" />
         </div>
 
         {message && (
@@ -101,43 +110,51 @@ const SettingsPage: React.FC = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700">Official School Name</label>
+                <label className="text-sm font-semibold text-gray-700">
+                  {t('settings.schoolName', 'Official School Name')}
+                </label>
                 <input 
                   type="text" 
                   name="schoolName" 
                   value={settings.schoolName} 
                   onChange={handleChange} 
-                  placeholder="e.g. Springfield High"
+                  placeholder={t('settings.schoolNamePlaceholder', 'e.g. Springfield High')}
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700">Primary Contact Email</label>
+                <label className="text-sm font-semibold text-gray-700">
+                  {t('settings.contactEmail', 'Primary Contact Email')}
+                </label>
                 <input 
                   type="email" 
                   name="contactEmail" 
                   value={settings.contactEmail} 
                   onChange={handleChange} 
-                  placeholder="admin@school.com"
+                  placeholder={t('settings.contactEmailPlaceholder', 'admin@school.com')}
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-all outline-none"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700">Institution Phone Number</label>
+                <label className="text-sm font-semibold text-gray-700">
+                  {t('settings.contactPhone', 'Institution Phone Number')}
+                </label>
                 <input 
                   type="tel" 
                   name="contactPhone" 
                   value={settings.contactPhone} 
                   onChange={handleChange} 
-                  placeholder="+1 (555) 000-0000"
+                  placeholder={t('settings.contactPhonePlaceholder', '+1 (555) 000-0000')}
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-all outline-none"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700">Timezone Base</label>
+                <label className="text-sm font-semibold text-gray-700">
+                  {t('settings.timezone', 'Timezone Base')}
+                </label>
                 <select 
                   name="timezone"
                   value={settings.timezone}
@@ -150,31 +167,53 @@ const SettingsPage: React.FC = () => {
                   <option value="America/Denver">Mountain Standard Time (MST)</option>
                   <option value="America/Los_Angeles">Pacific Standard Time (PST)</option>
                   <option value="Europe/London">London (GMT)</option>
+                  <option value="Africa/Nairobi">Nairobi (EAT)</option>
                   <option value="Asia/Dubai">Dubai (GST)</option>
-                  <option value="Asia/Tokyo">Tokyo (GST)</option>
+                  <option value="Asia/Tokyo">Tokyo (JST)</option>
                 </select>
               </div>
 
-              <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-semibold text-gray-700">Physical Address</label>
-                <input 
-                  type="text" 
-                  name="address" 
-                  value={settings.address} 
-                  onChange={handleChange} 
-                  placeholder="123 Main St, Region, Country"
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-all outline-none"
-                />
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700">
+                  {t('settings.language', 'System Language Preference')}
+                </label>
+                <select 
+                  value={currentLanguage}
+                  onChange={(e) => setLanguage(e.target.value as SupportedLanguage)}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-all outline-none cursor-pointer"
+                >
+                  {supportedLanguages.map((lang) => (
+                    <option key={lang.code} value={lang.code}>
+                      {lang.flag} {lang.nativeName} ({lang.name})
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-semibold text-gray-700">School Crest / Logo URL</label>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700">
+                  {t('settings.logoUrl', 'School Crest / Logo URL')}
+                </label>
                 <input 
                   type="url" 
                   name="logoUrl" 
                   value={settings.logoUrl} 
                   onChange={handleChange} 
-                  placeholder="https://assets.yourschool.com/logo.png"
+                  placeholder={t('settings.logoUrlPlaceholder', 'https://assets.yourschool.com/logo.png')}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-all outline-none"
+                />
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-sm font-semibold text-gray-700">
+                  {t('settings.address', 'Physical Address')}
+                </label>
+                <input 
+                  type="text" 
+                  name="address" 
+                  value={settings.address} 
+                  onChange={handleChange} 
+                  placeholder={t('settings.addressPlaceholder', '123 Main St, Region, Country')}
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 transition-all outline-none"
                 />
               </div>
@@ -191,7 +230,7 @@ const SettingsPage: React.FC = () => {
                 ) : (
                   <Save className="h-5 w-5 mr-2" />
                 )}
-                Save Configuration
+                {t('settings.save', 'Save Configuration')}
               </button>
             </div>
             

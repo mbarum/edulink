@@ -1,7 +1,9 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, Index } from 'typeorm';
 import { TenantAwareEntity } from 'src/core/tenancy/tenant-aware.entity';
 
 @Entity({ name: 'timetable_entries' })
+@Index(['tenantId', 'classLevel'])
+@Index(['tenantId', 'subjectId'])
 export class TimetableEntry extends TenantAwareEntity {
   @Column()
   classLevel: string;

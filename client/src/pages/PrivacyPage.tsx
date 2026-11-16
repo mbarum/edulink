@@ -61,7 +61,7 @@ const PrivacyPage: React.FC = () => {
                   <Lock className="mr-3 w-6 h-6 text-brand-sand" /> 3. Data Protection & Security
                 </h2>
                 <p>
-                  We implement enterprise-grade security measures, including end-to-end encryption (AES-256), secure socket layers (SSL), and multi-factor authentication. However, while we strive to use commercially acceptable means to protect your Personal Data, we cannot guarantee its absolute security.
+                  We implement enterprise-grade security measures including AES-256 encryption for sensitive data at rest, TLS/SSL encryption in transit, and role-based access controls. We continually work to enhance our security posture. However, while we strive to use commercially acceptable means to protect your Personal Data, we cannot guarantee its absolute security.
                 </p>
               </section>
 

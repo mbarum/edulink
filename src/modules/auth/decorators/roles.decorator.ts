@@ -1,5 +1,5 @@
-import { SetMetadata } from '@nestjs/common';
-import { UserRole } from 'src/common/user-role.enum';
-
-export const ROLES_KEY = 'roles';
-export const Roles = (...roles: UserRole[]) => SetMetadata(ROLES_KEY, roles);
+/**
+ * Canonical Roles decorator is defined in src/core/decorators/roles.decorator.
+ * Re-exported here for backwards compatibility.
+ */
+export * from 'src/core/decorators/roles.decorator';

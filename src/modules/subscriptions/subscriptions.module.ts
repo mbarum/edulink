@@ -14,5 +14,6 @@ import { SharedModule } from '../../shared/shared.module';
   imports: [TypeOrmModule.forFeature([Tenant, SubscriptionPlan, User]), TenancyModule, SharedModule],
   controllers: [SubscriptionsController, StripeWebhookController],
   providers: [SubscriptionsService, SubscriptionCronService],
+  exports: [SubscriptionsService, TypeOrmModule],
 })
 export class SubscriptionsModule {}

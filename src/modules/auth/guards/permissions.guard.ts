@@ -29,7 +29,7 @@ export class PermissionsGuard implements CanActivate {
     if (!user) return false;
 
     // Super Admin has all permissions
-    if (user.role === 'SuperAdmin') return true;
+    if (user.role === UserRole.SUPER_ADMIN) return true;
 
     const rolePermissions = await this.rolePermissionRepository.find({
       where: { role: user.role as UserRole, tenantId: user.tenantId as string },

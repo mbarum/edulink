@@ -3,8 +3,11 @@ import { motion } from 'framer-motion';
 import { Mail, ArrowLeft, Zap, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import { useLanguage } from '../contexts/LanguageContext';
+import LanguageSelector from '../components/LanguageSelector';
 
 const ForgotPasswordPage: React.FC = () => {
+  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -53,7 +56,10 @@ const ForgotPasswordPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-brand-green flex items-center justify-center p-6 font-sans">
+    <div className="min-h-screen bg-brand-green flex items-center justify-center p-6 font-sans relative">
+      <div className="absolute top-6 right-6">
+        <LanguageSelector variant="dark" />
+      </div>
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -63,8 +69,12 @@ const ForgotPasswordPage: React.FC = () => {
           <div className="inline-flex items-center justify-center w-16 h-16 bg-brand-sand rounded-2xl shadow-xl mb-6">
             <Zap className="w-8 h-8 text-brand-dark fill-current" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-brand-white">Reset Password</h1>
-          <p className="text-brand-white/40 mt-2 text-sm uppercase tracking-widest font-bold">Enter your email to receive a link</p>
+          <h1 className="text-3xl font-bold tracking-tight text-brand-white">
+            {t('auth.resetPasswordTitle', 'Reset Password')}
+          </h1>
+          <p className="text-brand-white/40 mt-2 text-sm uppercase tracking-widest font-bold">
+            {t('auth.resetSubtitle', 'Enter your email to receive recovery instructions')}
+          </p>
         </div>
 
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-10 rounded-[32px] shadow-2xl">

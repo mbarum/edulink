@@ -39,6 +39,7 @@
   "dependencies": {
     "@nestjs/axios": "^4.0.0",
     "@nestjs/bull": "^11.0.4",
+    "@nestjs/cache-manager": "^3.1.0",
     "@nestjs/common": "^11.0.0",
     "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.0.0",
@@ -54,6 +55,8 @@
     "axios": "^1.13.5",
     "bcrypt": "^6.0.0",
     "bull": "^4.16.5",
+    "cache-manager": "^7.2.8",
+    "cache-manager-redis-yet": "^5.1.5",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.4",
     "exceljs": "^4.4.0",
@@ -96,6 +99,7 @@
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
     "@types/module-alias": "^2.0.4",
+    "@types/multer": "^2.3.0",
     "@types/node": "^22.10.7",
     "@types/nodemailer": "^7.0.11",
     "@types/passport-google-oauth20": "^2.0.17",
@@ -134,6 +138,9 @@
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "moduleNameMapper": {
+      "^src/(.*)$": "<rootDir>/$1"
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s"

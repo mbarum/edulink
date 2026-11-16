@@ -2,8 +2,12 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin, Send, MessageSquare, ArrowLeft, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../contexts/LanguageContext';
+import LanguageSelector from '../components/LanguageSelector';
+import WhatsAppButton from '../components/WhatsAppButton';
 
 const ContactPage: React.FC = () => {
+  const { t } = useLanguage();
   const [formState, setFormState] = useState<'idle' | 'submitting' | 'success'>('idle');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -22,8 +26,9 @@ const ContactPage: React.FC = () => {
             <div className="w-10 h-10 bg-brand-green rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
               <ArrowLeft className="text-brand-sand w-5 h-5" />
             </div>
-            <span className="text-xl font-bold tracking-tight text-brand-green">Back to Home</span>
+            <span className="text-xl font-bold tracking-tight text-brand-green">{t('nav.backToHome', 'Back to Home')}</span>
           </Link>
+          <LanguageSelector variant="light" />
         </div>
       </nav>
 
@@ -64,7 +69,7 @@ const ContactPage: React.FC = () => {
                   </div>
                   <div>
                     <div className="text-[10px] font-bold uppercase tracking-widest text-brand-green/40 mb-1">Call Us</div>
-                    <div className="text-lg font-bold text-brand-green">+254 700 000 000</div>
+                    <div className="text-lg font-bold text-brand-green">+254 720 935 895</div>
                   </div>
                 </div>
 
@@ -167,6 +172,9 @@ const ContactPage: React.FC = () => {
           <p className="text-sm text-brand-green/40">© 2026 SaaSLink Technologies Limited. All rights reserved.</p>
         </div>
       </footer>
+
+      {/* Floating WhatsApp & Direct Contact Button */}
+      <WhatsAppButton />
     </div>
   );
 };

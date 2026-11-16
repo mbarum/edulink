@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, Repository } from 'typeorm';
+import { Between, In, Repository } from 'typeorm';
 import { Fee } from '../fees/entities/fee.entity';
 import { Expense } from '../expenses/entities/expense.entity';
 import { Attendance } from '../attendance/entities/attendance.entity';
@@ -265,72 +265,141 @@ export class ReportingService {
       relations: ['classLevel', 'section'],
     });
 
-    const children = await Promise.all(
-      childrenRaw.map(async (child) => {
-        // Calculate attendance
-        const totalDays = await this.attendanceRepository.count({
-          where: { studentId: child.id },
-        });
-        const presentDays = await this.attendanceRepository.count({
-          where: { studentId: child.id, status: 'present' },
-        });
-        const attendance =
-          totalDays > 0
-            ? Math.round((presentDays / totalDays) * 100) + '%'
-            : 'N/A';
+    const childIds = childrenRaw.map((c) => c.id);
+    if (childIds.length === 0) {
+      return {
+        children: [],
+        recentGrades: [],
+        upcomingEvents: [],
+      };
+    }
 
-        // Next payment
-        const nextFee = await this.feeRepository.findOne({
-          where: { studentId: child.id, status: 'unpaid' },
-          order: { dueDate: 'ASC' },
-        });
+    // Single aggregated attendance query across all children
+    const attendanceStats = await this.attendanceRepository
+      .createQueryBuilder('attendance')
+      .select('attendance.studentId', 'studentId')
+      .addSelect('COUNT(*)', 'totalDays')
+      .addSelect(
+        "SUM(CASE WHEN attendance.status = 'present' THEN 1 ELSE 0 END)",
+        'presentDays',
+      )
+      .where('attendance.tenantId = :tenantId', { tenantId })
+      .andWhere('attendance.studentId IN (:...childIds)', { childIds })
+      .groupBy('attendance.studentId')
+      .getRawMany();
+
+    const attendanceMap = new Map<
+      string,
+      { totalDays: number; presentDays: number }
+    >();
+    for (const stat of attendanceStats) {
+      attendanceMap.set(stat.studentId, {
+        totalDays: parseInt(stat.totalDays, 10) || 0,
+        presentDays: parseInt(stat.presentDays, 10) || 0,
+      });
+    }
+
+    // Single query for upcoming unpaid fees across all children
+    const unpaidFees = await this.feeRepository.find({
+      where: {
+        tenantId,
+        studentId: In(childIds),
+        status: 'unpaid',
+      },
+      order: { dueDate: 'ASC' },
+    });
+
+    const nextFeeMap = new Map<string, Fee>();
+    for (const fee of unpaidFees) {
+      if (!nextFeeMap.has(fee.studentId)) {
+        nextFeeMap.set(fee.studentId, fee);
+      }
+    }
+
+    const children = childrenRaw.map((child) => {
+      const stats = attendanceMap.get(child.id);
+      const totalDays = stats?.totalDays || 0;
+      const presentDays = stats?.presentDays || 0;
+      const attendance =
+        totalDays > 0
+          ? Math.round((presentDays / totalDays) * 100) + '%'
+          : 'N/A';
+
+      const nextFee = nextFeeMap.get(child.id);
+
+      return {
+        id: child.id,
+        name: `${child.firstName} ${child.lastName}`,
+        grade: child.classLevel ? child.classLevel.name : 'Unknown Grade',
+        attendance,
+        nextPaymentDue: nextFee
+          ? nextFee.dueDate.toDateString()
+          : 'No pending fees',
+        nextPaymentAmount: nextFee ? Number(nextFee.amount) : 0,
+      };
+    });
+
+    // Batch query for recent report cards
+    const gradesRaw = await this.reportCardRepository.find({
+      where: { tenantId, studentId: In(childIds) },
+      order: { id: 'DESC' },
+      take: 5,
+    });
+
+    let recentGrades: any[] = [];
+    if (gradesRaw.length > 0) {
+      const examIds = [
+        ...new Set(
+          gradesRaw
+            .map((g) => g.examinationId)
+            .filter((id): id is string => Boolean(id)),
+        ),
+      ];
+      const exams =
+        examIds.length > 0
+          ? await this.examinationRepository.find({
+              where: { id: In(examIds), tenantId },
+            })
+          : [];
+      const examMap = new Map(exams.map((e) => [e.id, e]));
+
+      const subjectIds = [
+        ...new Set(
+          exams
+            .map((e) => e.subjectId)
+            .filter((id): id is string => Boolean(id)),
+        ),
+      ];
+      const subjects =
+        subjectIds.length > 0
+          ? await this.subjectRepository.find({
+              where: { id: In(subjectIds), tenantId },
+            })
+          : [];
+      const subjectMap = new Map(subjects.map((s) => [s.id, s]));
+
+      recentGrades = gradesRaw.map((grade) => {
+        const student = childrenRaw.find((c) => c.id === grade.studentId);
+        const exam = grade.examinationId
+          ? examMap.get(grade.examinationId)
+          : null;
+        const subject = exam?.subjectId ? subjectMap.get(exam.subjectId) : null;
 
         return {
-          id: child.id,
-          name: `${child.firstName} ${child.lastName}`,
-          grade: child.classLevel ? child.classLevel.name : 'Unknown Grade',
-          attendance,
-          nextPaymentDue: nextFee
-            ? nextFee.dueDate.toDateString()
-            : 'No pending fees',
-          nextPaymentAmount: nextFee ? Number(nextFee.amount) : 0,
+          id: grade.id,
+          childName: student
+            ? `${student.firstName} ${student.lastName}`
+            : 'Unknown',
+          subject: subject ? subject.name : 'Unknown Subject',
+          grade:
+            grade.overallGrade ||
+            grade.grade ||
+            (grade.marks !== undefined && grade.marks !== null
+              ? grade.marks.toString()
+              : 'N/A'),
+          date: exam ? exam.date.toDateString() : 'Unknown Date',
         };
-      }),
-    );
-
-    // Fetch recent grades for these children
-    const childIds = childrenRaw.map((c) => c.id);
-    let recentGrades = [];
-    if (childIds.length > 0) {
-      const gradesRaw = await this.reportCardRepository.find({
-        where: childIds.map((id) => ({ studentId: id, tenantId })),
-        order: { id: 'DESC' }, // Assuming newer IDs are more recent, or add createdAt
-        take: 5,
       });
-
-      recentGrades = await Promise.all(
-        gradesRaw.map(async (grade) => {
-          const student = childrenRaw.find((c) => c.id === grade.studentId);
-          const exam = await this.examinationRepository.findOne({
-            where: { id: grade.examinationId },
-          });
-          const subject = exam
-            ? await this.subjectRepository.findOne({
-                where: { id: exam.subjectId },
-              })
-            : null;
-
-          return {
-            id: grade.id,
-            childName: student
-              ? `${student.firstName} ${student.lastName}`
-              : 'Unknown',
-            subject: subject ? subject.name : 'Unknown Subject',
-            grade: grade.grade || grade.marks.toString(),
-            date: exam ? exam.date.toDateString() : 'Unknown Date',
-          };
-        }),
-      );
     }
 
     // Upcoming events

@@ -1,19 +1,35 @@
-import { Injectable, Scope } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { AsyncLocalStorage } from 'async_hooks';
 import { Tenant } from 'src/modules/tenants/entities/tenant.entity';
 
-@Injectable({ scope: Scope.REQUEST })
+export interface TenancyStore {
+  tenant?: Tenant;
+}
+
+@Injectable()
 export class TenancyService {
-  private tenant: Tenant;
+  private static readonly als = new AsyncLocalStorage<TenancyStore>();
+  private fallbackTenant?: Tenant;
+
+  static runWithTenant<R>(tenant: Tenant, fn: () => R): R {
+    return TenancyService.als.run({ tenant }, fn);
+  }
 
   setTenant(tenant: Tenant) {
-    this.tenant = tenant;
+    const store = TenancyService.als.getStore();
+    if (store) {
+      store.tenant = tenant;
+    } else {
+      this.fallbackTenant = tenant;
+    }
   }
 
-  getTenant(): Tenant {
-    return this.tenant;
+  getTenant(): Tenant | undefined {
+    const store = TenancyService.als.getStore();
+    return store?.tenant ?? this.fallbackTenant;
   }
 
-  getTenantId(): string {
-    return this.tenant?.id;
+  getTenantId(): string | undefined {
+    return this.getTenant()?.id;
   }
 }
