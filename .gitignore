@@ -1,48 +1,10 @@
-# Dependencies
 node_modules/
-.pnp
-.pnp.js
-
-# Production Build Output
-/dist
-dist/
-dist-ssr/
-client/dist/
-*.tsbuildinfo
-
-# Testing & Coverage
-/coverage
-*.lcov
-.nyc_output
-
-# Environment & Secret Configuration
 .env
-.env.local
-.env.*.local
-*.pem
-*.key
-
-# Application File Uploads & Local State
-server-uploads/
-/uploads
-uploads/
-
-# Logs
-logs/
+.env.*
+!.env.example
+dist/
+build/
+coverage/
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-# OS & Editor Files
 .DS_Store
-Thumbs.db
-.idea/
 .vscode/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
